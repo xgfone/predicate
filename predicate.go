@@ -12,12 +12,12 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
 */
 
 /*
-Predicate package used to create interpreted mini languages with Go syntax - mostly to define
-various predicates for configuration, e.g. Latency() > 40 || ErrorRate() > 0.5.
+Package predicate is used to create interpreted mini languages with Go syntax
+- mostly to definevarious predicates for configuration,
+e.g. Latency() > 40 || ErrorRate() > 0.5.
 
 Here's an example of fully functional predicate language to deal with division remainders:
 
@@ -29,8 +29,8 @@ Here's an example of fully functional predicate language to deal with division r
 
     // Function that creates predicate to test if the remainder is 0
     func divisibleBy(divisor int) numberPredicate {
-	    return func(v int) bool {
-		    return v%divisor == 0
+        return func(v int) bool {
+            return v%divisor == 0
         }
     }
 
@@ -42,15 +42,15 @@ Here's an example of fully functional predicate language to deal with division r
     }
 
     p, err := NewParser(Def{
-		Operators: Operators{
-			AND: numberAND,
-		},
-		Functions: map[string]interface{}{
-			"DivisibleBy": divisibleBy,
-		},
-	})
+        Operators: Operators{
+            AND: numberAND,
+        },
+        Functions: map[string]interface{}{
+            "DivisibleBy": divisibleBy,
+        },
+    })
 
-	pr, err := p.Parse("DivisibleBy(2) && DivisibleBy(3)")
+    pr, err := p.Parse("DivisibleBy(2) && DivisibleBy(3)")
     if err == nil {
         fmt.Fatalf("Error: %v", err)
     }
