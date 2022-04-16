@@ -31,6 +31,15 @@ func (p *predicateParser) parseNode(node ast.Node) (interface{}, error) {
 	switch n := node.(type) {
 	case *ast.BasicLit:
 		return literalToValue(n)
+	case *ast.Ident:
+		if p.d.GetIdentifier == nil {
+			return nil, fmt.Errorf("%v is not defined", n.Name)
+		}
+		val, err := p.d.GetIdentifier([]string{n.Name})
+		if err != nil {
+			return nil, err
+		}
+		return val, nil
 	case *ast.BinaryExpr:
 		x, err := p.parseNode(n.X)
 		if err != nil {
