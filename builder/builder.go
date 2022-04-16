@@ -15,8 +15,8 @@ limitations under the License.
 
 */
 
-// package builder is used to construct predicate
-// expressions using builder functions.
+// Package builder is used to construct predicate expressions
+// using builder functions.
 package builder
 
 import (
@@ -32,7 +32,7 @@ type Expr interface {
 	String() string
 }
 
-// IdentiferExpr is identifer expression
+// IdentifierExpr is identifer expression
 type IdentifierExpr string
 
 // String serializes identifer expression into format parsed by rules engine
@@ -40,7 +40,7 @@ func (i IdentifierExpr) String() string {
 	return string(i)
 }
 
-// Identifer returns identifier expression
+// Identifier returns identifier expression
 func Identifier(v string) IdentifierExpr {
 	return IdentifierExpr(v)
 }
