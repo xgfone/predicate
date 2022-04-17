@@ -101,6 +101,16 @@ func (p *predicateParser) evaluateExpr(n ast.Expr) (interface{}, error) {
 			return nil, err
 		}
 		return val, nil
+	case *ast.BinaryExpr:
+		x, err := p.parseNode(l.X)
+		if err != nil {
+			return nil, err
+		}
+		y, err := p.parseNode(l.Y)
+		if err != nil {
+			return nil, err
+		}
+		return p.joinPredicates(l.Op, x, y)
 	case *ast.IndexExpr:
 		if p.d.GetProperty == nil {
 			return nil, fmt.Errorf("properties are not supported")
