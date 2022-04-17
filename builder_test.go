@@ -14,9 +14,7 @@
 
 package predicate
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // ************************************************************************* //
 /// Define some validators.

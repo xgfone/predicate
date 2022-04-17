@@ -24,61 +24,8 @@ func (p *predicateParser) Parse(in string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return p.parseNode(expr)
-}
 
-func (p *predicateParser) parseNode(node ast.Node) (interface{}, error) {
-	switch n := node.(type) {
-	case *ast.BasicLit:
-		return literalToValue(n)
-	case *ast.Ident:
-		if p.d.GetIdentifier == nil {
-			return nil, fmt.Errorf("%v is not defined", n.Name)
-		}
-		val, err := p.d.GetIdentifier([]string{n.Name})
-		if err != nil {
-			return nil, err
-		}
-		return val, nil
-	case *ast.BinaryExpr:
-		x, err := p.parseNode(n.X)
-		if err != nil {
-			return nil, err
-		}
-		y, err := p.parseNode(n.Y)
-		if err != nil {
-			return nil, err
-		}
-		return p.joinPredicates(n.Op, x, y)
-	case *ast.CallExpr:
-		// We expect function that will return predicate
-		name, err := getIdentifier(n.Fun)
-		if err != nil {
-			return nil, err
-		}
-		fn, err := p.getFunction(name)
-		if err != nil {
-			return nil, err
-		}
-		arguments, err := p.evaluateArguments(n.Args)
-		if err != nil {
-			return nil, err
-		}
-		return callFunction(fn, arguments)
-	case *ast.ParenExpr:
-		return p.parseNode(n.X)
-	case *ast.UnaryExpr:
-		joinFn, err := p.getJoinFunction(n.Op)
-		if err != nil {
-			return nil, err
-		}
-		node, err := p.parseNode(n.X)
-		if err != nil {
-			return nil, err
-		}
-		return callFunction(joinFn, []interface{}{node})
-	}
-	return nil, fmt.Errorf("unsupported %T", node)
+	return p.evaluateExpr(expr)
 }
 
 func (p *predicateParser) evaluateArguments(nodes []ast.Expr) ([]interface{}, error) {
@@ -96,74 +43,90 @@ func (p *predicateParser) evaluateArguments(nodes []ast.Expr) ([]interface{}, er
 func (p *predicateParser) evaluateExpr(n ast.Expr) (interface{}, error) {
 	switch l := n.(type) {
 	case *ast.BasicLit:
-		val, err := literalToValue(l)
-		if err != nil {
-			return nil, err
-		}
-		return val, nil
+		return literalToValue(l)
+
 	case *ast.BinaryExpr:
-		x, err := p.parseNode(l.X)
+		x, err := p.evaluateExpr(l.X)
 		if err != nil {
 			return nil, err
 		}
-		y, err := p.parseNode(l.Y)
+
+		y, err := p.evaluateExpr(l.Y)
 		if err != nil {
 			return nil, err
 		}
+
 		return p.joinPredicates(l.Op, x, y)
+
 	case *ast.IndexExpr:
 		if p.d.GetProperty == nil {
 			return nil, fmt.Errorf("properties are not supported")
 		}
+
 		mapVal, err := p.evaluateExpr(l.X)
 		if err != nil {
 			return nil, err
 		}
+
 		keyVal, err := p.evaluateExpr(l.Index)
 		if err != nil {
 			return nil, err
 		}
-		val, err := p.d.GetProperty(mapVal, keyVal)
-		if err != nil {
-			return nil, err
-		}
-		return val, nil
+
+		return p.d.GetProperty(mapVal, keyVal)
+
 	case *ast.SelectorExpr:
 		fields, err := evaluateSelector(l, []string{})
 		if err != nil {
 			return nil, err
 		}
+
 		if p.d.GetIdentifier == nil {
 			return nil, fmt.Errorf("%v is not defined", strings.Join(fields, "."))
 		}
-		val, err := p.d.GetIdentifier(fields)
-		if err != nil {
-			return nil, err
-		}
-		return val, nil
+
+		return p.d.GetIdentifier(fields)
+
 	case *ast.Ident:
 		if p.d.GetIdentifier == nil {
 			return nil, fmt.Errorf("%v is not defined", l.Name)
 		}
-		val, err := p.d.GetIdentifier([]string{l.Name})
-		if err != nil {
-			return nil, err
-		}
-		return val, nil
+		return p.d.GetIdentifier([]string{l.Name})
+
 	case *ast.CallExpr:
 		name, err := getIdentifier(l.Fun)
 		if err != nil {
 			return nil, err
 		}
+
 		fn, err := p.getFunction(name)
 		if err != nil {
 			return nil, err
 		}
+
 		arguments, err := p.evaluateArguments(l.Args)
 		if err != nil {
 			return nil, err
 		}
+
 		return callFunction(fn, arguments)
+
+	case *ast.ParenExpr:
+		return p.evaluateExpr(l.X)
+
+	case *ast.UnaryExpr:
+		joinFn, err := p.getJoinFunction(l.Op)
+		if err != nil {
+			return nil, err
+		}
+
+		node, err := p.evaluateExpr(l.X)
+		if err != nil {
+			return nil, err
+		}
+
+		return callFunction(joinFn, []interface{}{node})
+
 	default:
 		return nil, fmt.Errorf("%T is not supported", n)
 	}
