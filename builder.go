@@ -1,4 +1,4 @@
-// Copyright 2022 xgfone
+// Copyright 2022~2023 xgfone
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -131,6 +131,15 @@ func (b *Builder) RegisterFunc(name string, f BuilderFunction) {
 	b.pfuncs[name] = func(values ...interface{}) treeBuilder {
 		return func() *tree { return &tree{builder: b, matcher: name, values: values} }
 	}
+}
+
+// GetAllFuncNames returns the names of all the registered builder functions.
+func (b *Builder) GetAllFuncNames() (names []string) {
+	names = make([]string, 0, len(b.funcs))
+	for name := range b.funcs {
+		names = append(names, name)
+	}
+	return
 }
 
 func (b *Builder) getIdentifier(selector []string) (interface{}, error) {
