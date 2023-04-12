@@ -200,6 +200,20 @@ func ExampleBuilder() {
 		fmt.Println(validator.Validate("abcdefghijklmn"))
 	}
 
+	ctx = newContext()
+	if err = builder.Build(ctx, "min(-1)"); err != nil {
+		fmt.Println(err)
+	} else {
+		validator := AndValidator(ctx.Validators())
+
+		fmt.Println(validator.Validate(-2))
+		fmt.Println(validator.Validate(-1))
+	}
+	ctx = newContext()
+	if err = builder.Build(ctx, "min(-`a`)"); err != nil {
+		fmt.Println(err)
+	}
+
 	// Output:
 	// the integer is less than 1
 	// <nil>
@@ -210,4 +224,7 @@ func ExampleBuilder() {
 	// the string length is less than 5
 	// <nil>
 	// the string length is greater than 10
+	// the integer is less than -1
+	// <nil>
+	// - expects an integer or float, but got string
 }

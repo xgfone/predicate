@@ -128,7 +128,7 @@ func (p *predicateParser) evaluateExpr(n ast.Expr) (interface{}, error) {
 		return callFunction(joinFn, []interface{}{node})
 
 	default:
-		return nil, fmt.Errorf("%T is not supported", n)
+		return nil, fmt.Errorf("%s(%T) is not supported", n, n)
 	}
 }
 
@@ -184,11 +184,23 @@ func (p *predicateParser) getJoinFunction(op token.Token) (interface{}, error) {
 		fn = p.d.Operators.EQ
 	case token.NEQ:
 		fn = p.d.Operators.NEQ
+	case token.SUB:
+		fn = negFunc
 	}
 	if fn == nil {
-		return nil, fmt.Errorf("%v is not supported", op)
+		return nil, fmt.Errorf("%v(%T) is not supported", op, op)
 	}
 	return fn, nil
+}
+
+func negFunc(number interface{}) (interface{}, error) {
+	switch n := number.(type) {
+	case int:
+		return -n, nil
+	case float64:
+		return -n, nil
+	}
+	return nil, fmt.Errorf("- expects an integer or float, but got %T", number)
 }
 
 func getIdentifier(node ast.Node) (string, error) {
